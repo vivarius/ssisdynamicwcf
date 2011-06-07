@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Xml;
 using System.Xml.Serialization;
 
-namespace SSISWebServiceTask100
+namespace SSISWCFTask100
 {
-    internal static class NamedStringMembers
+    internal static class Keys
     {
         public const string SERVICE_URL = "ServiceUrl";
         public const string SERVICE = "Service";

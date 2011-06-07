@@ -16,7 +16,7 @@ using System.Xml;
 using System.Xml.Serialization;
 using Microsoft.CSharp;
 
-namespace SSISWebServiceTask100
+namespace SSISWCFTask100
 {
     [WebServiceBinding(Name = "WebServiceSoap", Namespace = "http://tempuri.org/")]
     public class WSDLHandler : SoapHttpClientProtocol

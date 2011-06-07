@@ -8,23 +8,23 @@ using DTSExecResult = Microsoft.SqlServer.Dts.Runtime.DTSExecResult;
 using DTSProductLevel = Microsoft.SqlServer.Dts.Runtime.DTSProductLevel;
 using VariableDispenser = Microsoft.SqlServer.Dts.Runtime.VariableDispenser;
 
-namespace SSISWebServiceTask100.SSIS
+namespace SSISWCFTask100.SSIS
 {
     [DtsTask(
         DisplayName = "Dynamic WebService Task",
-        UITypeName = "SSISWebServiceTask100.SSISWebServicesTaskUIInterface" +
-        ",SSISWebServiceTask100," +
+        UITypeName = "SSISWCFTask100.SSISWebServicesTaskUIInterface" +
+        ",SSISWCFTask100," +
         "Version=1.1.0.56," +
         "Culture=Neutral," +
-        "PublicKeyToken=f9b925106ec285b7",
-        IconResource = "SSISWebServiceTask100.DownloadIcon.ico",
+        "PublicKeyToken=dbcd46b65a9ba84f",
+        IconResource = "SSISWCFTask100.Communication.ico",
         TaskContact = "cosmin.vlasiu@gmail.com",
         RequiredProductLevel = DTSProductLevel.None
         )]
-    public class SSISWebServiceTask : Task, IDTSComponentPersist
+    public class SSISWCFTask : Task, IDTSComponentPersist
     {
         #region Constructor
-        public SSISWebServiceTask()
+        public SSISWCFTask()
         {
         }
 
@@ -62,25 +62,25 @@ namespace SSISWebServiceTask100.SSIS
 
             if (base.Validate(connections, variableDispenser, componentEvents, log) != DTSExecResult.Success)
             {
-                componentEvents.FireError(0, "SSISWebServiceTask", "Base validation failed", "", 0);
+                componentEvents.FireError(0, "SSISWCFTask", "Base validation failed", "", 0);
                 isBaseValid = false;
             }
 
             if (string.IsNullOrEmpty(ServiceUrl))
             {
-                componentEvents.FireError(0, "SSISWebServiceTask", "An URL is required.", "", 0);
+                componentEvents.FireError(0, "SSISWCFTask", "An URL is required.", "", 0);
                 isBaseValid = false;
             }
 
             if (string.IsNullOrEmpty(Service))
             {
-                componentEvents.FireError(0, "SSISWebServiceTask", "A service name is required.", "", 0);
+                componentEvents.FireError(0, "SSISWCFTask", "A service name is required.", "", 0);
                 isBaseValid = false;
             }
 
             if (string.IsNullOrEmpty(WebMethod))
             {
-                componentEvents.FireError(0, "SSISWebServiceTask", "A WebMethod name is required.", "", 0);
+                componentEvents.FireError(0, "SSISWCFTask", "A WebMethod name is required.", "", 0);
                 isBaseValid = false;
             }
 
@@ -105,7 +105,7 @@ namespace SSISWebServiceTask100.SSIS
             bool refire = false;
 
             componentEvents.FireInformation(0,
-                                            "SSISWebServiceTask",
+                                            "SSISWCFTask",
                                             "Prepare variables",
                                             string.Empty,
                                             0,
@@ -116,7 +116,7 @@ namespace SSISWebServiceTask100.SSIS
             try
             {
                 componentEvents.FireInformation(0,
-                                               "SSISWebServiceTask",
+                                               "SSISWCFTask",
                                                string.Format("Initialize WebService: {0}", EvaluateExpression(ServiceUrl, variableDispenser)),
                                                string.Empty,
                                                0,
@@ -125,7 +125,7 @@ namespace SSISWebServiceTask100.SSIS
                 using (var wsdlHandler = new WSDLHandler(new Uri(EvaluateExpression(ServiceUrl, variableDispenser).ToString())))
                 {
                     componentEvents.FireInformation(0,
-                                                   "SSISWebServiceTask",
+                                                   "SSISWCFTask",
                                                    string.Format("InvokeRemoteMethod: {0}=>{1}",
                                                                  EvaluateExpression(Service, variableDispenser),
                                                                  EvaluateExpression(WebMethod, variableDispenser)),
@@ -145,7 +145,7 @@ namespace SSISWebServiceTask100.SSIS
                     if (IsValueReturned == "1")
                     {
                         componentEvents.FireInformation(0,
-                                                        "SSISWebServiceTask",
+                                                        "SSISWCFTask",
                                                         string.Format("Get the Returned Value to: {0}", ReturnedValue),
                                                         string.Empty,
                                                         0,
@@ -154,7 +154,7 @@ namespace SSISWebServiceTask100.SSIS
                         string val = ReturnedValue.Split(new[] { "::" }, StringSplitOptions.RemoveEmptyEntries)[1].Trim();
 
                         componentEvents.FireInformation(0,
-                                                        "SSISWebServiceTask",
+                                                        "SSISWCFTask",
                                                         string.Format("Get the Returned Value to {0} and convert to {1}",
                                                                       val.Substring(0, val.Length - 1),
                                                                       _vars[val.Substring(0, val.Length - 1)].DataType),
@@ -165,7 +165,7 @@ namespace SSISWebServiceTask100.SSIS
                         _vars[val.Substring(0, val.Length - 1)].Value = Convert.ChangeType(result[0], _vars[val.Substring(0, val.Length - 1)].DataType);
 
                         componentEvents.FireInformation(0,
-                                                        "SSISWebServiceTask",
+                                                        "SSISWCFTask",
                                                         string.Format("The String Result is {0} ",
                                                                       _vars[val.Substring(0, val.Length - 1)].Value),
                                                         string.Empty,
@@ -175,7 +175,7 @@ namespace SSISWebServiceTask100.SSIS
                     else
                     {
                         componentEvents.FireInformation(0,
-                                                        "SSISWebServiceTask",
+                                                        "SSISWCFTask",
                                                         "Execution without return or no associated return variable",
                                                         string.Empty,
                                                         0,
@@ -188,7 +188,7 @@ namespace SSISWebServiceTask100.SSIS
             catch (Exception ex)
             {
                 componentEvents.FireError(0,
-                                          "SSISWebServiceTask",
+                                          "SSISWCFTask",
                                           string.Format("Problem: {0}",
                                                         ex.Message + "\n" + ex.StackTrace),
                                           "",
@@ -247,7 +247,7 @@ namespace SSISWebServiceTask100.SSIS
             {
                 var param = ServiceUrl;
 
-                componentEvents.FireInformation(0, "SSISWebServiceTask", "ServiceUrl = " + ServiceUrl, string.Empty, 0, ref refire);
+                componentEvents.FireInformation(0, "SSISWCFTask", "ServiceUrl = " + ServiceUrl, string.Empty, 0, ref refire);
 
                 if (param.Contains("@"))
                 {
@@ -257,7 +257,7 @@ namespace SSISWebServiceTask100.SSIS
                     {
                         try
                         {
-                            componentEvents.FireInformation(0, "SSISWebServiceTask", nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')), string.Empty, 0, ref refire);
+                            componentEvents.FireInformation(0, "SSISWCFTask", nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')), string.Empty, 0, ref refire);
                             variableDispenser.LockForRead(nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')));
                         }
                         catch (Exception exception)
@@ -276,7 +276,7 @@ namespace SSISWebServiceTask100.SSIS
             {
                 var param = Service;
 
-                componentEvents.FireInformation(0, "SSISWebServiceTask", "Service = " + Service, string.Empty, 0, ref refire);
+                componentEvents.FireInformation(0, "SSISWCFTask", "Service = " + Service, string.Empty, 0, ref refire);
 
                 if (param.Contains("@"))
                 {
@@ -286,7 +286,7 @@ namespace SSISWebServiceTask100.SSIS
                     {
                         try
                         {
-                            componentEvents.FireInformation(0, "SSISWebServiceTask", nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')), string.Empty, 0, ref refire);
+                            componentEvents.FireInformation(0, "SSISWCFTask", nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')), string.Empty, 0, ref refire);
                             variableDispenser.LockForRead(nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')));
                         }
                         catch (Exception exception)
@@ -305,7 +305,7 @@ namespace SSISWebServiceTask100.SSIS
             {
                 var param = WebMethod;
 
-                componentEvents.FireInformation(0, "SSISWebServiceTask", "WebMethod = " + WebMethod, string.Empty, 0, ref refire);
+                componentEvents.FireInformation(0, "SSISWCFTask", "WebMethod = " + WebMethod, string.Empty, 0, ref refire);
 
                 if (param.Contains("@"))
                 {
@@ -315,7 +315,7 @@ namespace SSISWebServiceTask100.SSIS
                     {
                         try
                         {
-                            componentEvents.FireInformation(0, "SSISWebServiceTask", nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')), string.Empty, 0, ref refire);
+                            componentEvents.FireInformation(0, "SSISWCFTask", nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')), string.Empty, 0, ref refire);
                             variableDispenser.LockForRead(nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')));
                         }
                         catch (Exception exception)
@@ -337,7 +337,7 @@ namespace SSISWebServiceTask100.SSIS
                 {
                     var param = ReturnedValue;
 
-                    componentEvents.FireInformation(0, "SSISWebServiceTask", "ReturnedValue = " + ReturnedValue,
+                    componentEvents.FireInformation(0, "SSISWCFTask", "ReturnedValue = " + ReturnedValue,
                                                     string.Empty, 0, ref refire);
 
                     if (param.Contains("@"))
@@ -348,7 +348,7 @@ namespace SSISWebServiceTask100.SSIS
                         {
                             try
                             {
-                                componentEvents.FireInformation(0, "SSISWebServiceTask",
+                                componentEvents.FireInformation(0, "SSISWCFTask",
                                                                 nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')),
                                                                 string.Empty, 0, ref refire);
                                 variableDispenser.LockForWrite(nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')));
@@ -368,7 +368,7 @@ namespace SSISWebServiceTask100.SSIS
 
             try
             {
-                componentEvents.FireInformation(0, "SSISWebServiceTask", "MappingParams ", string.Empty, 0, ref refire);
+                componentEvents.FireInformation(0, "SSISWCFTask", "MappingParams ", string.Empty, 0, ref refire);
 
                 //Get variables for MappingParams
                 foreach (var mappingParams in (MappingParams)MappingParams)
@@ -385,7 +385,7 @@ namespace SSISWebServiceTask100.SSIS
                             {
                                 try
                                 {
-                                    componentEvents.FireInformation(0, "SSISWebServiceTask", nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')), string.Empty, 0, ref refire);
+                                    componentEvents.FireInformation(0, "SSISWCFTask", nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')), string.Empty, 0, ref refire);
                                     variableDispenser.LockForRead(nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')));
                                 }
                                 catch (Exception exception)
@@ -421,24 +421,24 @@ namespace SSISWebServiceTask100.SSIS
         /// <param name="infoEvents">The info events.</param>
         void IDTSComponentPersist.SaveToXML(XmlDocument doc, IDTSInfoEvents infoEvents)
         {
-            XmlElement taskElement = doc.CreateElement(string.Empty, "SSISWebServiceTask", string.Empty);
+            XmlElement taskElement = doc.CreateElement(string.Empty, "SSISWCFTask", string.Empty);
 
-            XmlAttribute serviceUrl = doc.CreateAttribute(string.Empty, NamedStringMembers.SERVICE_URL, string.Empty);
+            XmlAttribute serviceUrl = doc.CreateAttribute(string.Empty, Keys.SERVICE_URL, string.Empty);
             serviceUrl.Value = ServiceUrl;
 
-            XmlAttribute service = doc.CreateAttribute(string.Empty, NamedStringMembers.SERVICE, string.Empty);
+            XmlAttribute service = doc.CreateAttribute(string.Empty, Keys.SERVICE, string.Empty);
             service.Value = Service;
 
-            XmlAttribute webMethod = doc.CreateAttribute(string.Empty, NamedStringMembers.WEBMETHOD, string.Empty);
+            XmlAttribute webMethod = doc.CreateAttribute(string.Empty, Keys.WEBMETHOD, string.Empty);
             webMethod.Value = WebMethod;
 
-            XmlAttribute mappingParams = doc.CreateAttribute(string.Empty, NamedStringMembers.MAPPING_PARAMS, string.Empty);
+            XmlAttribute mappingParams = doc.CreateAttribute(string.Empty, Keys.MAPPING_PARAMS, string.Empty);
             mappingParams.Value = Serializer.SerializeToXmlString(MappingParams);
 
-            XmlAttribute returnedVariable = doc.CreateAttribute(string.Empty, NamedStringMembers.RETURNED_VALUE, string.Empty);
+            XmlAttribute returnedVariable = doc.CreateAttribute(string.Empty, Keys.RETURNED_VALUE, string.Empty);
             returnedVariable.Value = ReturnedValue;
 
-            XmlAttribute isReturnedVariable = doc.CreateAttribute(string.Empty, NamedStringMembers.IS_VALUE_RETURNED, string.Empty);
+            XmlAttribute isReturnedVariable = doc.CreateAttribute(string.Empty, Keys.IS_VALUE_RETURNED, string.Empty);
             isReturnedVariable.Value = IsValueReturned;
 
             taskElement.Attributes.Append(serviceUrl);
@@ -458,19 +458,19 @@ namespace SSISWebServiceTask100.SSIS
         /// <param name="infoEvents">The info events.</param>
         void IDTSComponentPersist.LoadFromXML(XmlElement node, IDTSInfoEvents infoEvents)
         {
-            if (node.Name != "SSISWebServiceTask")
+            if (node.Name != "SSISWCFTask")
             {
                 throw new Exception("Wrong node name");
             }
 
             try
             {
-                ServiceUrl = node.Attributes.GetNamedItem(NamedStringMembers.SERVICE_URL).Value;
-                Service = node.Attributes.GetNamedItem(NamedStringMembers.SERVICE).Value;
-                WebMethod = node.Attributes.GetNamedItem(NamedStringMembers.WEBMETHOD).Value;
-                MappingParams = Serializer.DeSerializeFromXmlString(typeof(MappingParams), node.Attributes.GetNamedItem(NamedStringMembers.MAPPING_PARAMS).Value);
-                ReturnedValue = node.Attributes.GetNamedItem(NamedStringMembers.RETURNED_VALUE).Value;
-                IsValueReturned = node.Attributes.GetNamedItem(NamedStringMembers.IS_VALUE_RETURNED).Value;
+                ServiceUrl = node.Attributes.GetNamedItem(Keys.SERVICE_URL).Value;
+                Service = node.Attributes.GetNamedItem(Keys.SERVICE).Value;
+                WebMethod = node.Attributes.GetNamedItem(Keys.WEBMETHOD).Value;
+                MappingParams = Serializer.DeSerializeFromXmlString(typeof(MappingParams), node.Attributes.GetNamedItem(Keys.MAPPING_PARAMS).Value);
+                ReturnedValue = node.Attributes.GetNamedItem(Keys.RETURNED_VALUE).Value;
+                IsValueReturned = node.Attributes.GetNamedItem(Keys.IS_VALUE_RETURNED).Value;
             }
             catch
             {

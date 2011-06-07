@@ -9,7 +9,7 @@ using TaskHost = Microsoft.SqlServer.Dts.Runtime.TaskHost;
 using Variable = Microsoft.SqlServer.Dts.Runtime.Variable;
 using VariableDispenser = Microsoft.SqlServer.Dts.Runtime.VariableDispenser;
 
-namespace SSISWebServiceTask100
+namespace SSISWCFTask100
 {
     public partial class frmEditProperties : Form
     {
@@ -47,29 +47,29 @@ namespace SSISWebServiceTask100
 
                 //Get URL's Service
                 cmbURL.Items.AddRange(LoadVariables("System.String").ToArray());
-                if (_taskHost.Properties[NamedStringMembers.SERVICE_URL].GetValue(_taskHost) != null)
-                    if (!string.IsNullOrEmpty(_taskHost.Properties[NamedStringMembers.SERVICE_URL].GetValue(_taskHost).ToString()))
+                if (_taskHost.Properties[Keys.SERVICE_URL].GetValue(_taskHost) != null)
+                    if (!string.IsNullOrEmpty(_taskHost.Properties[Keys.SERVICE_URL].GetValue(_taskHost).ToString()))
                     {
                         cmbURL.SelectedIndexChanged -= cmbURL_SelectedIndexChanged;
                         cmbServices.SelectedIndexChanged -= cmbServices_SelectedIndexChanged;
                         cmbMethods.SelectedIndexChanged -= cmbMethods_SelectedIndexChanged;
 
 
-                        _wsdlHandler = new WSDLHandler(new Uri(EvaluateExpression(_taskHost.Properties[NamedStringMembers.SERVICE_URL].GetValue(_taskHost).ToString(),
+                        _wsdlHandler = new WSDLHandler(new Uri(EvaluateExpression(_taskHost.Properties[Keys.SERVICE_URL].GetValue(_taskHost).ToString(),
                                                                                   _taskHost.VariableDispenser).ToString()));
 
-                        cmbURL.Text = _taskHost.Properties[NamedStringMembers.SERVICE_URL].GetValue(_taskHost).ToString();
+                        cmbURL.Text = _taskHost.Properties[Keys.SERVICE_URL].GetValue(_taskHost).ToString();
 
                         //Get Services
                         cmbServices.Items.AddRange(_wsdlHandler.AvailableServices.ToArray());
-                        cmbServices.SelectedIndex = FindStringInComboBox(cmbServices, _taskHost.Properties[NamedStringMembers.SERVICE].GetValue(_taskHost).ToString(), -1);
+                        cmbServices.SelectedIndex = FindStringInComboBox(cmbServices, _taskHost.Properties[Keys.SERVICE].GetValue(_taskHost).ToString(), -1);
 
                         //Get Methods by service
-                        cmbMethods.Items.AddRange(_wsdlHandler.GetServiceMethods(_taskHost.Properties[NamedStringMembers.SERVICE].GetValue(_taskHost).ToString()).ToArray());
-                        cmbMethods.SelectedIndex = FindStringInComboBox(cmbMethods, _taskHost.Properties[NamedStringMembers.WEBMETHOD].GetValue(_taskHost).ToString(), -1);
+                        cmbMethods.Items.AddRange(_wsdlHandler.GetServiceMethods(_taskHost.Properties[Keys.SERVICE].GetValue(_taskHost).ToString()).ToArray());
+                        cmbMethods.SelectedIndex = FindStringInComboBox(cmbMethods, _taskHost.Properties[Keys.WEBMETHOD].GetValue(_taskHost).ToString(), -1);
 
                         var webServiceMethod = from m in _wsdlHandler.WebServiceMethods
-                                               where m.Name == _taskHost.Properties[NamedStringMembers.WEBMETHOD].GetValue(_taskHost).ToString()
+                                               where m.Name == _taskHost.Properties[Keys.WEBMETHOD].GetValue(_taskHost).ToString()
                                                select new WebServiceMethod
                                                           {
                                                               Name = m.Name,
@@ -77,16 +77,16 @@ namespace SSISWebServiceTask100
                                                           };
 
                         //Get returned variables
-                        if (_taskHost.Properties[NamedStringMembers.RETURNED_VALUE] != null)
+                        if (_taskHost.Properties[Keys.RETURNED_VALUE] != null)
                         {
-                            if (!string.IsNullOrEmpty(_taskHost.Properties[NamedStringMembers.RETURNED_VALUE].GetValue(_taskHost).ToString()))
+                            if (!string.IsNullOrEmpty(_taskHost.Properties[Keys.RETURNED_VALUE].GetValue(_taskHost).ToString()))
                             {
                                 cmbReturnVariable.Items.AddRange(LoadVariables((webServiceMethod.FirstOrDefault()).ResultType).ToArray());
-                                cmbReturnVariable.SelectedIndex = FindStringInComboBox(cmbReturnVariable, _taskHost.Properties[NamedStringMembers.RETURNED_VALUE].GetValue(_taskHost).ToString(), -1);
+                                cmbReturnVariable.SelectedIndex = FindStringInComboBox(cmbReturnVariable, _taskHost.Properties[Keys.RETURNED_VALUE].GetValue(_taskHost).ToString(), -1);
                             }
                         }
 
-                        FillGridWithParams(_taskHost.Properties[NamedStringMembers.MAPPING_PARAMS].GetValue(_taskHost) as MappingParams);
+                        FillGridWithParams(_taskHost.Properties[Keys.MAPPING_PARAMS].GetValue(_taskHost) as MappingParams);
 
                         cmbURL.SelectedIndexChanged += cmbURL_SelectedIndexChanged;
                         cmbServices.SelectedIndexChanged += cmbServices_SelectedIndexChanged;
@@ -198,9 +198,9 @@ namespace SSISWebServiceTask100
         private void btSave_Click(object sender, EventArgs e)
         {
             //Save the values
-            _taskHost.Properties[NamedStringMembers.SERVICE_URL].SetValue(_taskHost, cmbURL.Text);
-            _taskHost.Properties[NamedStringMembers.SERVICE].SetValue(_taskHost, cmbServices.Text);
-            _taskHost.Properties[NamedStringMembers.WEBMETHOD].SetValue(_taskHost, cmbMethods.Text);
+            _taskHost.Properties[Keys.SERVICE_URL].SetValue(_taskHost, cmbURL.Text);
+            _taskHost.Properties[Keys.SERVICE].SetValue(_taskHost, cmbServices.Text);
+            _taskHost.Properties[Keys.WEBMETHOD].SetValue(_taskHost, cmbMethods.Text);
 
             var mappingParams = new MappingParams();
 
@@ -212,9 +212,9 @@ namespace SSISWebServiceTask100
                                                   Value = mappingParam.Cells[2].Value.ToString()
                                               });
 
-            _taskHost.Properties[NamedStringMembers.MAPPING_PARAMS].SetValue(_taskHost, mappingParams);
-            _taskHost.Properties[NamedStringMembers.RETURNED_VALUE].SetValue(_taskHost, cmbReturnVariable.Text);
-            _taskHost.Properties[NamedStringMembers.IS_VALUE_RETURNED].SetValue(_taskHost, _withReturnValue.ToString());
+            _taskHost.Properties[Keys.MAPPING_PARAMS].SetValue(_taskHost, mappingParams);
+            _taskHost.Properties[Keys.RETURNED_VALUE].SetValue(_taskHost, cmbReturnVariable.Text);
+            _taskHost.Properties[Keys.IS_VALUE_RETURNED].SetValue(_taskHost, _withReturnValue.ToString());
             DialogResult = DialogResult.OK;
             Close();
         }

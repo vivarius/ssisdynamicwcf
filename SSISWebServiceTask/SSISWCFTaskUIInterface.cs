@@ -2,12 +2,12 @@
 using System.Windows.Forms;
 using Microsoft.SqlServer.Dts.Runtime;
 using Microsoft.SqlServer.Dts.Runtime.Design;
-using SSISWebServiceTask100;
+using SSISWCFTask100;
 
 
-namespace SSISWebServiceTask100
+namespace SSISWCFTask100
 {
-    class SSISWebServicesTaskUIInterface : IDtsTaskUI
+    class SSISWCFTaskUIInterface : IDtsTaskUI
     {
         #region Private Variables
 
@@ -16,7 +16,7 @@ namespace SSISWebServiceTask100
         #endregion
 
         #region Constructor
-        public SSISWebServicesTaskUIInterface()
+        public SSISWCFTaskUIInterface()
         {
         }
 

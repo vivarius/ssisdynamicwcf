@@ -1,4 +1,4 @@
-﻿namespace SSISWebServiceTask100
+﻿namespace SSISWCFTask100
 {
     partial class frmEditProperties
     {
