@@ -3,9 +3,8 @@ using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.ServiceModel.Description;
 using System.Text;
-using SSISWCFTask100.WCFProxy;
 
-namespace WcfSamples.DynamicProxy
+namespace SSISWCFTask100.WCFProxy
 {
     public class DynamicProxyException : ApplicationException
     {

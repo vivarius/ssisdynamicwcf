@@ -1,6 +1,5 @@
 using System;
 using System.Reflection;
-using WcfSamples.DynamicProxy;
 
 namespace SSISWCFTask100.WCFProxy
 {
@@ -126,11 +125,11 @@ namespace SSISWCFTask100.WCFProxy
             if (types.Length != parameters.Length)
                 throw new ArgumentException(Constants.ErrorMessages.ParameterValueMistmatch);
 
-            MethodInfo mi = _objType.GetMethod(method, types);
-            if (mi == null)
+            MethodInfo methodInfo = _objType.GetMethod(method, types);
+            if (methodInfo == null)
                 throw new ApplicationException(string.Format(Constants.ErrorMessages.MethodNotFound, method));
 
-            object retval = mi.Invoke(_obj, _commonBindingFlags, null, parameters, null);
+            object retval = methodInfo.Invoke(_obj, _commonBindingFlags, null, parameters, null);
 
             return retval;
         }

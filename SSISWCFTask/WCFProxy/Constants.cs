@@ -1,4 +1,4 @@
-namespace WcfSamples.DynamicProxy
+namespace SSISWCFTask100.WCFProxy
 {
     internal class Constants
     {

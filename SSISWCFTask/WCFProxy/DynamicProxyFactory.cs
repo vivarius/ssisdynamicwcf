@@ -19,17 +19,50 @@ using System.Web.Services.Discovery;
 using System.Xml;
 using System.Xml.Schema;
 using System.Xml.Serialization;
-using WcfSamples.DynamicProxy;
 using Binding = System.ServiceModel.Channels.Binding;
 using ServiceDescription = System.Web.Services.Description.ServiceDescription;
+using WsdlNS = System.Web.Services.Description;
 
 namespace SSISWCFTask100.WCFProxy
 {
+
+    #region Methods & Parameters
+
+    public class WebServiceMethods : List<WebServiceMethod>
+    {
+    }
+
+    public class WebServiceMethod
+    {
+        public WebServiceMethod()
+        {
+            WebServiceMethodParameters = new WebServiceMethodParameters();
+        }
+
+        public string Name { get; set; }
+        public string ResultType { get; set; }
+
+        public WebServiceMethodParameters WebServiceMethodParameters { get; set; }
+    }
+
+    public class WebServiceMethodParameters : List<WebServiceMethodParameter>
+    {
+    }
+
+    public class WebServiceMethodParameter
+    {
+        public string Name { get; set; }
+        public string Type { get; set; }
+    }
+
+    #endregion
+
     public class DynamicProxyFactory
     {
         internal const string DefaultNamespace = "http://tempuri.org/";
         private readonly DynamicProxyFactoryOptions _options;
         private readonly string _wsdlUri;
+        private Dictionary<string, Type> _availableTypes;
         private IEnumerable<Binding> _bindings;
 
         private CodeCompileUnit _codeCompileUnit;
@@ -43,8 +76,22 @@ namespace SSISWCFTask100.WCFProxy
         private IEnumerable<MetadataConversionError> _importWarnings;
         private Collection<MetadataSection> _metadataCollection;
 
+
         private Assembly _proxyAssembly;
         private string _proxyCode;
+        private List<string> _services;
+        private WebServiceMethods _webServiceMethods = new WebServiceMethods();
+        public Dictionary<string, Type> AvailableTypes
+        {
+            get { return _availableTypes; }
+            set { _availableTypes = value; }
+        }
+
+        public WebServiceMethods WebServiceMethods
+        {
+            get { return _webServiceMethods; }
+            set { _webServiceMethods = value; }
+        }
 
         public DynamicProxyFactory(string wsdlUri, DynamicProxyFactoryOptions options)
         {
@@ -67,6 +114,12 @@ namespace SSISWCFTask100.WCFProxy
         public DynamicProxyFactory(string wsdlUri)
             : this(wsdlUri, new DynamicProxyFactoryOptions())
         {
+        }
+
+        public Dictionary<string, WebServiceMethods> AvailableServices
+        {
+            get;
+            set;
         }
 
         public IEnumerable<MetadataSection> Metadata
@@ -191,6 +244,55 @@ namespace SSISWCFTask100.WCFProxy
             }
         }
 
+        /// <summary>
+        /// Gets the service methods.
+        /// </summary>
+        /// <param name="serviceName">Name of the service.</param>
+        /// <returns></returns>
+        public List<string> GetServiceMethods(string serviceName)
+        {
+            if (!_availableTypes.ContainsKey(serviceName))
+                throw new Exception("Service Not Available");
+
+            Type type = _availableTypes[serviceName];
+
+            var methods = type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly).Select(method => method.Name).ToList();
+
+            WebServiceMethods = GetWebMethods(type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly));
+
+            AvailableServices.Add(serviceName, WebServiceMethods);
+
+            return methods;
+        }
+
+        /// <summary>
+        /// Gets the web methods.
+        /// </summary>
+        /// <returns></returns>
+        public WebServiceMethods GetWebMethods(MethodInfo[] methodInfos)
+        {
+            _webServiceMethods = new WebServiceMethods();
+
+            foreach (MethodInfo methodInfo in methodInfos)
+            {
+                var webServiceMethodParameters = new WebServiceMethodParameters();
+                webServiceMethodParameters.AddRange(methodInfo.GetParameters().Select(parameter => new WebServiceMethodParameter
+                                                                                                       {
+                                                                                                           Name = parameter.Name,
+                                                                                                           Type = parameter.ParameterType.FullName
+                                                                                                       }));
+
+                _webServiceMethods.Add(new WebServiceMethod
+                                           {
+                                               Name = methodInfo.Name,
+                                               ResultType = methodInfo.ReturnType.ToString(),
+                                               WebServiceMethodParameters = webServiceMethodParameters
+                                           });
+            }
+
+            return _webServiceMethods;
+        }
+
         private void AddStateForXmlSerializerImport(WsdlImporter importer)
         {
             var importOptions = new XmlSerializerImportOptions(_codeCompileUnit)
@@ -198,12 +300,16 @@ namespace SSISWCFTask100.WCFProxy
                                         CodeProvider = _codeDomProvider,
                                         WebReferenceOptions = new WebReferenceOptions
                                                                   {
-                                                                      CodeGenerationOptions = CodeGenerationOptions.GenerateProperties | CodeGenerationOptions.GenerateOrder
+                                                                      CodeGenerationOptions =
+                                                                          CodeGenerationOptions.GenerateProperties |
+                                                                          CodeGenerationOptions.GenerateOrder
                                                                   }
                                     };
 
-            importOptions.WebReferenceOptions.SchemaImporterExtensions.Add(typeof(TypedDataSetSchemaImporterExtension).AssemblyQualifiedName);
-            importOptions.WebReferenceOptions.SchemaImporterExtensions.Add(typeof(DataSetSchemaImporterExtension).AssemblyQualifiedName);
+            importOptions.WebReferenceOptions.SchemaImporterExtensions.Add(
+                typeof(TypedDataSetSchemaImporterExtension).AssemblyQualifiedName);
+            importOptions.WebReferenceOptions.SchemaImporterExtensions.Add(
+                typeof(DataSetSchemaImporterExtension).AssemblyQualifiedName);
 
             importer.State.Add(typeof(XmlSerializerImportOptions), importOptions);
         }
@@ -214,16 +320,25 @@ namespace SSISWCFTask100.WCFProxy
                                               {
                                                   Options = new ImportOptions
                                                                 {
-                                                                    ImportXmlType = (_options.FormatMode == DynamicProxyFactoryOptions.FormatModeOptions.DataContractSerializer),
+                                                                    ImportXmlType =
+                                                                        (_options.FormatMode ==
+                                                                         DynamicProxyFactoryOptions.FormatModeOptions.
+                                                                             DataContractSerializer),
                                                                     CodeProvider = _codeDomProvider
                                                                 }
                                               };
 
             importer.State.Add(typeof(XsdDataContractImporter), xsdDataContractImporter);
 
-            foreach (var dcConverter in importer.WsdlImportExtensions.OfType<DataContractSerializerMessageContractImporter>())
+            foreach (IWsdlImportExtension importExtension in importer.WsdlImportExtensions)
             {
-                dcConverter.Enabled = _options.FormatMode != DynamicProxyFactoryOptions.FormatModeOptions.XmlSerializer;
+                var dcConverter = importExtension as DataContractSerializerMessageContractImporter;
+
+                if (dcConverter != null)
+                {
+                    dcConverter.Enabled = _options.FormatMode !=
+                                          DynamicProxyFactoryOptions.FormatModeOptions.XmlSerializer;
+                }
             }
         }
 
@@ -284,6 +399,21 @@ namespace SSISWCFTask100.WCFProxy
 
             _compilerWarnings = ToEnumerable(results.Errors);
             _proxyAssembly = Assembly.LoadFile(results.PathToAssembly);
+
+            Type[] types = _proxyAssembly.GetExportedTypes();
+
+            _services = new List<string>();
+            _availableTypes = new Dictionary<string, Type>();
+
+            AvailableServices = new Dictionary<string, WebServiceMethods>();
+
+            foreach (Type type in types)
+            {
+                _services.Add(type.FullName);
+                _availableTypes.Add(type.FullName, type);
+                AvailableTypes = _availableTypes;
+                GetServiceMethods(type.FullName);
+            }
         }
 
         private void WriteCode()
@@ -331,7 +461,8 @@ namespace SSISWCFTask100.WCFProxy
             ServiceEndpoint matchingEndpoint = Endpoints.FirstOrDefault(endpoint => ContractNameMatch(endpoint.Contract, contractName) && ContractNsMatch(endpoint.Contract, contractNamespace));
 
             if (matchingEndpoint == null)
-                throw new ArgumentException(string.Format(Constants.ErrorMessages.EndpointNotFound, contractName, contractNamespace));
+                throw new ArgumentException(string.Format(Constants.ErrorMessages.EndpointNotFound, contractName,
+                                                          contractNamespace));
 
             return matchingEndpoint;
         }
@@ -380,7 +511,8 @@ namespace SSISWCFTask100.WCFProxy
                 if (!type.IsInterface) continue;
 
                 // Is it marked with ServiceContract attribute?
-                object[] attrs = type.GetCustomAttributes(typeof(ServiceContractAttribute), false);
+                object[] attrs = type.GetCustomAttributes(
+                    typeof(ServiceContractAttribute), false);
                 if ((attrs == null) || (attrs.Length == 0)) continue;
 
                 // is it the required service contract?
@@ -410,9 +542,7 @@ namespace SSISWCFTask100.WCFProxy
                 name = contractType.Name;
             }
 
-            ns = ns == null 
-                    ? DefaultNamespace 
-                    : Uri.EscapeUriString(ns);
+            ns = ns == null ? DefaultNamespace : Uri.EscapeUriString(ns);
 
             return new XmlQualifiedName(name, ns);
         }
@@ -422,6 +552,7 @@ namespace SSISWCFTask100.WCFProxy
             Type clientBaseType = typeof(ClientBase<>).MakeGenericType(contractType);
 
             Type[] allTypes = ProxyAssembly.GetTypes();
+
             Type proxyType = allTypes.FirstOrDefault(type => type.IsClass && contractType.IsAssignableFrom(type) && type.IsSubclassOf(clientBaseType));
 
             if (proxyType == null)
