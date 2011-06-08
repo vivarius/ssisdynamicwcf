@@ -260,7 +260,11 @@ namespace SSISWCFTask100.WCFProxy
 
             WebServiceMethods = GetWebMethods(type.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly));
 
-            AvailableServices.Add(serviceName, WebServiceMethods);
+            foreach (var contractDescription in Contracts)
+            {
+                if (contractDescription.Name == serviceName && !AvailableServices.ContainsKey(serviceName))
+                    AvailableServices.Add(serviceName, WebServiceMethods);
+            }
 
             return methods;
         }

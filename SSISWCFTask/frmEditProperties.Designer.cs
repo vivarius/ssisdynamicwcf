@@ -64,7 +64,7 @@
             // 
             // btGO
             // 
-            this.btGO.Location = new System.Drawing.Point(519, 12);
+            this.btGO.Location = new System.Drawing.Point(519, 10);
             this.btGO.Name = "btGO";
             this.btGO.Size = new System.Drawing.Size(42, 23);
             this.btGO.TabIndex = 1;
@@ -92,10 +92,11 @@
             // 
             // cmbServices
             // 
+            this.cmbServices.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbServices.FormattingEnabled = true;
             this.cmbServices.Location = new System.Drawing.Point(114, 36);
             this.cmbServices.Name = "cmbServices";
-            this.cmbServices.Size = new System.Drawing.Size(448, 21);
+            this.cmbServices.Size = new System.Drawing.Size(447, 21);
             this.cmbServices.TabIndex = 3;
             this.cmbServices.SelectedIndexChanged += new System.EventHandler(this.cmbServices_SelectedIndexChanged);
             // 
@@ -177,6 +178,7 @@
             // 
             // cmbMethods
             // 
+            this.cmbMethods.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbMethods.FormattingEnabled = true;
             this.cmbMethods.Location = new System.Drawing.Point(113, 63);
             this.cmbMethods.Name = "cmbMethods";
@@ -248,6 +250,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.CancelButton = this.btnCancel;
             this.ClientSize = new System.Drawing.Size(573, 352);
             this.Controls.Add(this.listView1);
             this.Controls.Add(this.btSave);
