@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.ServiceModel;
@@ -18,7 +19,7 @@ namespace SSISWCFTask100
         DisplayName = "Dynamic WCF Task",
         UITypeName = "SSISWCFTask100.SSISWCFTaskUIInterface" +
         ",SSISWCFTask100," +
-        "Version=1.0.0.25," +
+        "Version=1.0.0.43," +
         "Culture=Neutral," +
         "PublicKeyToken=dbcd46b65a9ba84f",
         IconResource = "SSISWCFTask100.Communication.ico",
@@ -125,6 +126,7 @@ namespace SSISWCFTask100
                                                string.Empty,
                                                0,
                                                ref refire);
+
                 var dynamicProxyFactory = new DynamicProxyFactory(EvaluateExpression(ServiceUrl, variableDispenser).ToString());
 
                 int count = 0;
@@ -138,7 +140,7 @@ namespace SSISWCFTask100
 
                 componentEvents.FireInformation(0,
                                                "SSISWCFTask",
-                                               string.Format("InvokeRemoteMethod: {0}=>{1}",
+                                               string.Format("InvokeRemoteMethod: {0} => {1}",
                                                              EvaluateExpression(ServiceContract, variableDispenser),
                                                              EvaluateExpression(OperationContract, variableDispenser)),
                                                string.Empty,
@@ -148,6 +150,7 @@ namespace SSISWCFTask100
                 componentEvents.FireInformation(0, "SSISWCFTask", string.Format("Creating DynamicProxy to {0} ServiceContract", EvaluateExpression(ServiceContract, variableDispenser)), string.Empty, 0, ref refire);
 
                 DynamicProxy dynamicProxy = dynamicProxyFactory.CreateProxy(EvaluateExpression(ServiceContract, variableDispenser).ToString());
+
                 if (dynamicProxy == null)
                     throw new Exception("Cannot create the proxy");
 
@@ -171,17 +174,28 @@ namespace SSISWCFTask100
                                                                 string.Format("Name: {0} | Type: {1} | Value: {2}",
                                                                                param.Name,
                                                                                param.Type,
-                                                                               EvaluateExpression(param.Value, variableDispenser)),
+                                                                               Convert.ChangeType(EvaluateExpression(param.Value, variableDispenser).ToString(), Type.GetType(param.Type))),
                                                                 string.Empty, 0, ref refire);
                             }
 
-                            componentEvents.FireInformation(0, "SSISWCFTask", string.Format("Call [{0}] OperationContract", EvaluateExpression(OperationContract, variableDispenser)), string.Empty, 0, ref refire);
-                            result = dynamicProxy.CallMethod(EvaluateExpression(OperationContract, variableDispenser).ToString(),
-                                                             new object[]
-                                                                           {
-                                                                                (from parameters in ((MappingParams)MappingParams)
-                                                                                 select Convert.ChangeType(EvaluateExpression(parameters.Value, variableDispenser).ToString(), Type.GetType(parameters.Type))).ToArray()
-                                                                           });
+                            componentEvents.FireInformation(0, "SSISWCFTask", string.Format("Call [{0}] OperationContract with parameters:", EvaluateExpression(OperationContract, variableDispenser)), string.Empty, 0, ref refire);
+
+                            int countParam = ((MappingParams)MappingParams).Count;
+
+                            var objParams = new object[countParam];
+
+                            for (int i = 0; i < countParam; i++)
+                            {
+                                objParams[i] = Convert.ChangeType(EvaluateExpression(((MappingParams)MappingParams)[i].Value, variableDispenser).ToString(), Type.GetType(((MappingParams)MappingParams)[i].Type));
+                            }
+
+                            result = dynamicProxy.CallMethod(EvaluateExpression(OperationContract, variableDispenser).ToString(), objParams);
+
+                            //new object[]
+                            //               {
+                            //                   (from parameters in ((MappingParams)MappingParams)
+                            //                   select Convert.ChangeType(EvaluateExpression(parameters.Value, variableDispenser).ToString(), Type.GetType(parameters.Type))).ToArray()
+                            //               });
                         }
                     }
                     else
@@ -284,6 +298,26 @@ namespace SSISWCFTask100
         }
 
         /// <summary>
+        /// Determines whether [is variable in lock for read or write] [the specified lock for read].
+        /// </summary>
+        /// <param name="lockForRead">The lock for read.</param>
+        /// <param name="variable">The variable.</param>
+        /// <returns>
+        /// 	<c>true</c> if [is variable in lock for read or write] [the specified lock for read]; otherwise, <c>false</c>.
+        /// </returns>
+        private static bool IsVariableInLockForReadOrWrite(List<string> lockForRead, string variable)
+        {
+            bool retVal = lockForRead.Contains(variable);
+
+            if (!retVal)
+            {
+                lockForRead.Add(variable);
+            }
+
+            return retVal;
+        }
+
+        /// <summary>
         /// Gets the needed variables.
         /// </summary>
         /// <param name="variableDispenser">The variable dispenser.</param>
@@ -292,11 +326,13 @@ namespace SSISWCFTask100
         {
             bool refire = false;
 
-            try
+            List<string> lockForRead = new List<string>();
+
             {
                 var param = ServiceUrl;
 
-                componentEvents.FireInformation(0, "SSISWCFTask", "ServiceUrl = " + ServiceUrl, string.Empty, 0, ref refire);
+                componentEvents.FireInformation(0, "SSISWCFTask", "WcfServiceUrl = " + ServiceUrl, string.Empty, 0,
+                                                ref refire);
 
                 if (param.Contains("@"))
                 {
@@ -306,8 +342,11 @@ namespace SSISWCFTask100
                     {
                         try
                         {
-                            componentEvents.FireInformation(0, "SSISWCFTask", nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')), string.Empty, 0, ref refire);
-                            variableDispenser.LockForRead(nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')));
+                            componentEvents.FireInformation(0, "SSISWCFTask",
+                                                            nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')),
+                                                            string.Empty, 0, ref refire);
+                            if (!IsVariableInLockForReadOrWrite(lockForRead, nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']'))))
+                                variableDispenser.LockForRead(nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')));
                         }
                         catch (Exception exception)
                         {
@@ -316,16 +355,11 @@ namespace SSISWCFTask100
                     }
                 }
             }
-            catch
-            {
-                //We will continue...
-            }
-
-            try
             {
                 var param = ServiceContract;
 
-                componentEvents.FireInformation(0, "SSISWCFTask", "ServiceContract = " + ServiceContract, string.Empty, 0, ref refire);
+                componentEvents.FireInformation(0, "SSISWCFTask", "ServiceContract = " + ServiceContract, string.Empty,
+                                                0, ref refire);
 
                 if (param.Contains("@"))
                 {
@@ -335,8 +369,11 @@ namespace SSISWCFTask100
                     {
                         try
                         {
-                            componentEvents.FireInformation(0, "SSISWCFTask", nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')), string.Empty, 0, ref refire);
-                            variableDispenser.LockForRead(nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')));
+                            componentEvents.FireInformation(0, "SSISWCFTask",
+                                                            nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')),
+                                                            string.Empty, 0, ref refire);
+                            if (!IsVariableInLockForReadOrWrite(lockForRead, nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']'))))
+                                variableDispenser.LockForRead(nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')));
                         }
                         catch (Exception exception)
                         {
@@ -345,16 +382,11 @@ namespace SSISWCFTask100
                     }
                 }
             }
-            catch (Exception exception)
-            {
-                throw new Exception(exception.Message);
-            }
 
-            try
             {
                 var param = OperationContract;
 
-                componentEvents.FireInformation(0, "SSISWCFTask", "WebMethod = " + OperationContract, string.Empty, 0, ref refire);
+                componentEvents.FireInformation(0, "SSISWCFTask", "OperationContract = " + OperationContract, string.Empty, 0, ref refire);
 
                 if (param.Contains("@"))
                 {
@@ -365,7 +397,9 @@ namespace SSISWCFTask100
                         try
                         {
                             componentEvents.FireInformation(0, "SSISWCFTask", nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')), string.Empty, 0, ref refire);
-                            variableDispenser.LockForRead(nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')));
+
+                            if (!IsVariableInLockForReadOrWrite(lockForRead, nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']'))))
+                                variableDispenser.LockForRead(nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')));
                         }
                         catch (Exception exception)
                         {
@@ -373,15 +407,10 @@ namespace SSISWCFTask100
                         }
                     }
                 }
-            }
-            catch (Exception exception)
-            {
-                throw new Exception(exception.Message);
+
             }
 
-            try
             {
-
                 if (!string.IsNullOrEmpty(ReturnedValue))
                 {
                     var param = ReturnedValue;
@@ -400,7 +429,8 @@ namespace SSISWCFTask100
                                 componentEvents.FireInformation(0, "SSISWCFTask",
                                                                 nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')),
                                                                 string.Empty, 0, ref refire);
-                                variableDispenser.LockForWrite(nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')));
+                                if (!IsVariableInLockForReadOrWrite(lockForRead, nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']'))))
+                                    variableDispenser.LockForWrite(nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')));
                             }
                             catch (Exception exception)
                             {
@@ -410,50 +440,24 @@ namespace SSISWCFTask100
                     }
                 }
             }
-            catch (Exception exception)
-            {
-                throw new Exception(exception.Message);
-            }
 
-            try
-            {
-                componentEvents.FireInformation(0, "SSISWCFTask", "MappingParams ", string.Empty, 0, ref refire);
+            componentEvents.FireInformation(0, "SSISWCFTask", "MappingParams ", string.Empty, 0, ref refire);
 
-                //Get variables for MappingParams
-                foreach (var mappingParams in (MappingParams)MappingParams)
+            //Get variables for MappingParams
+            foreach (var nexSplitedVal in ((MappingParams)MappingParams)
+                                                .Where(mappingParam => mappingParam.Value.Contains("@"))
+                                                .Select(mappingParam => mappingParam.Value.Split('@'))
+                                                .SelectMany(regexStr => regexStr.Where(val => val.Trim().Length != 0).Select(strVal => strVal.Split(new[] { "::" }, StringSplitOptions.RemoveEmptyEntries))))
+            {
+                try
                 {
-
-                    try
-                    {
-                        if (mappingParams.Value.Contains("@"))
-                        {
-                            var regexStr = mappingParams.Value.Split('@');
-
-                            foreach (var nexSplitedVal in
-                                    regexStr.Where(val => val.Trim().Length != 0).Select(strVal => strVal.Split(new[] { "::" }, StringSplitOptions.RemoveEmptyEntries)))
-                            {
-                                try
-                                {
-                                    componentEvents.FireInformation(0, "SSISWCFTask", nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')), string.Empty, 0, ref refire);
-                                    variableDispenser.LockForRead(nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')));
-                                }
-                                catch (Exception exception)
-                                {
-                                    throw new Exception(exception.Message);
-                                }
-                            }
-                        }
-                    }
-                    catch (Exception exception)
-                    {
-                        throw new Exception(exception.Message);
-                    }
-
+                    componentEvents.FireInformation(0, "SSISWCFTask",
+                                                    nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')),
+                                                    string.Empty, 0, ref refire);
+                    if (!IsVariableInLockForReadOrWrite(lockForRead, nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']'))))
+                        variableDispenser.LockForRead(nexSplitedVal[1].Remove(nexSplitedVal[1].IndexOf(']')));
                 }
-            }
-            catch (Exception ex)
-            {
-                componentEvents.FireError(0, "SSISReportGeneratorTask", string.Format("Problem MappingParams: {0} {1}", ex.Message, ex.StackTrace), "", 0);
+                catch { }
             }
 
             variableDispenser.GetVariables(ref _vars);

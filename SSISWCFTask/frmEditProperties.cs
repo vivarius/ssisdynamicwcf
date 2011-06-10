@@ -59,65 +59,59 @@ namespace SSISWCFTask100
 
                         ReloadFromService();
 
-                        //Get Services
-                        foreach (var service in _dynamicProxyFactory.AvailableServices)
-                        {
-                            cmbServices.Items.Add(new ComboBoxObjectComboItem(service.Value, service.Key));
-                        }
-
-                        cmbServices.SelectedIndex = FindStringInComboBox(cmbServices, _taskHost.Properties[Keys.SERVICE_CONTRACT].GetValue(_taskHost).ToString(), -1);
-
-                        //Get Operation Contracts by Service Contract
-                        foreach (var method in ((WebServiceMethods)(((ComboBoxObjectComboItem)(cmbServices.SelectedItem)).ValueMemeber)))
-                        {
-                            cmbMethods.Items.Add(new ComboBoxObjectComboItem(method.WebServiceMethodParameters, method.Name));
-                        }
-
-                        cmbMethods.SelectedIndex = FindStringInComboBox(cmbMethods, _taskHost.Properties[Keys.OPERATION_CONTRACT].GetValue(_taskHost).ToString(), -1);
-
-                        if (_taskHost.Properties[Keys.RETURNED_VALUE].GetValue(_taskHost) != null)
-                        {
-                            if (!string.IsNullOrEmpty(_taskHost.Properties[Keys.RETURNED_VALUE].GetValue(_taskHost).ToString()))
+                        if (_taskHost.Properties[Keys.SERVICE_CONTRACT].GetValue(_taskHost) != null)
+                            if (!string.IsNullOrEmpty(_taskHost.Properties[Keys.SERVICE_CONTRACT].GetValue(_taskHost).ToString()))
                             {
-                                foreach (var service in _dynamicProxyFactory.AvailableServices.Where(service => service.Key == cmbServices.Text))
+                                cmbServices.SelectedIndex = FindStringInComboBox(cmbServices, _taskHost.Properties[Keys.SERVICE_CONTRACT].GetValue(_taskHost).ToString(), -1);
+
+                                //Get Operation Contracts by Service Contract
+                                foreach (var method in ((WebServiceMethods)(((ComboBoxObjectComboItem)(cmbServices.SelectedItem)).ValueMemeber)))
                                 {
-                                    foreach (var webServiceMethods in service.Value)
+                                    cmbMethods.Items.Add(new ComboBoxObjectComboItem(method.WebServiceMethodParameters, method.Name));
+                                }
+
+                                cmbMethods.SelectedIndex = FindStringInComboBox(cmbMethods, _taskHost.Properties[Keys.OPERATION_CONTRACT].GetValue(_taskHost).ToString(), -1);
+
+                                if (_taskHost.Properties[Keys.RETURNED_VALUE].GetValue(_taskHost) != null)
+                                {
+                                    if (!string.IsNullOrEmpty(_taskHost.Properties[Keys.RETURNED_VALUE].GetValue(_taskHost).ToString()))
                                     {
-                                        if (webServiceMethods.Name != cmbMethods.Text)
-                                            continue;
-
-                                        string selectedText = string.Empty;
-
-                                        cmbReturnVariable.Items.Clear();
-
-                                        cmbReturnVariable.Items.AddRange(LoadVariables(webServiceMethods.ResultType, ref selectedText).Items.Cast<string>().ToList().Where(s => s.StartsWith("@[User")).ToArray());
-                                        cmbReturnVariable.SelectedIndex = FindStringInComboBox(cmbReturnVariable, _taskHost.Properties[Keys.RETURNED_VALUE].GetValue(_taskHost).ToString(), -1);
-
-                                        switch (webServiceMethods.ResultType)
+                                        foreach (var service in _dynamicProxyFactory.AvailableServices.Where(service => service.Key == cmbServices.Text))
                                         {
-                                            case "System.Void":
-                                                lbOutputValue.Visible = cmbReturnVariable.Visible = false;
-                                                _withReturnValue = Keys.FALSE;
-                                                break;
-                                            default:
-                                                lbOutputValue.Visible = cmbReturnVariable.Visible = true;
-                                                _withReturnValue = Keys.TRUE;
-                                                break;
+                                            foreach (var webServiceMethods in service.Value)
+                                            {
+                                                if (webServiceMethods.Name != cmbMethods.Text)
+                                                    continue;
+
+                                                string selectedText = string.Empty;
+
+                                                cmbReturnVariable.Items.Clear();
+
+                                                cmbReturnVariable.Items.AddRange(LoadVariables(webServiceMethods.ResultType, ref selectedText).Items.Cast<string>().ToList().Where(s => s.StartsWith("@[User")).ToArray());
+                                                cmbReturnVariable.SelectedIndex = FindStringInComboBox(cmbReturnVariable, _taskHost.Properties[Keys.RETURNED_VALUE].GetValue(_taskHost).ToString(), -1);
+
+                                                switch (webServiceMethods.ResultType)
+                                                {
+                                                    case "System.Void":
+                                                        lbOutputValue.Visible = cmbReturnVariable.Visible = false;
+                                                        _withReturnValue = Keys.FALSE;
+                                                        break;
+                                                    default:
+                                                        lbOutputValue.Visible = cmbReturnVariable.Visible = true;
+                                                        _withReturnValue = Keys.TRUE;
+                                                        break;
+                                                }
+                                            }
                                         }
                                     }
                                 }
+                                else
+                                {
+                                    cmbReturnVariable.Items.AddRange(LoadAllVariables().ToArray());
+                                }
+
+                                FillGridWithParams(_taskHost.Properties[Keys.MAPPING_PARAMS].GetValue(_taskHost) as MappingParams);
                             }
-                        }
-                        else
-                        {
-                            cmbReturnVariable.Items.AddRange(LoadAllVariables().ToArray());
-                        }
-
-                        FillGridWithParams(_taskHost.Properties[Keys.MAPPING_PARAMS].GetValue(_taskHost) as MappingParams);
-
-                        cmbURL.SelectedIndexChanged += cmbURL_SelectedIndexChanged;
-                        cmbServices.SelectedIndexChanged += cmbServices_SelectedIndexChanged;
-                        cmbMethods.SelectedIndexChanged += cmbMethods_SelectedIndexChanged;
                     }
             }
             catch (Exception exception)
@@ -126,6 +120,9 @@ namespace SSISWCFTask100
             }
             finally
             {
+                cmbURL.SelectedIndexChanged += cmbURL_SelectedIndexChanged;
+                cmbServices.SelectedIndexChanged += cmbServices_SelectedIndexChanged;
+                cmbMethods.SelectedIndexChanged += cmbMethods_SelectedIndexChanged;
                 Cursor = Cursors.Arrow;
             }
         }
@@ -206,9 +203,7 @@ namespace SSISWCFTask100
                                                        Expression = mappedParam
                                                    };
 
-                expressionEvaluatorClass.Evaluate(DtsConvert.GetExtendedInterface(variableDispenser),
-                                                  out variableObject,
-                                                  false);
+                expressionEvaluatorClass.Evaluate(DtsConvert.GetExtendedInterface(variableDispenser), out variableObject, false);
             }
             else
             {
@@ -225,32 +220,13 @@ namespace SSISWCFTask100
             cmbServices.Items.Clear();
             cmbMethods.Items.Clear();
             grdParameters.Rows.Clear();
-
-            foreach (var contract in _dynamicProxyFactory.Contracts)
+            foreach (KeyValuePair<string, WebServiceMethods> service in
+                     from contract in _dynamicProxyFactory.Contracts
+                     from service in _dynamicProxyFactory.AvailableServices
+                     where service.Key == contract.Name
+                     select service)
             {
-                foreach (KeyValuePair<string, WCFProxy.WebServiceMethods> service in _dynamicProxyFactory.AvailableServices)
-                {
-                    if (service.Key == contract.Name)
-                    {
-                        cmbServices.Items.Add(new ComboBoxObjectComboItem(service.Value, service.Key));
-
-                        //foreach (var serviceOperation in contract.Operations)
-                        //{
-                        //    foreach (var val in service.Value)
-                        //    {
-                        //        if (serviceOperation.Name == val.Name)
-                        //        {
-                        //            cmbServices.Items.Add(new ComboBoxObjectComboItem(service.Value, service.Key));
-
-                        //            /*foreach (var webServiceMethodParameters in val.WebServiceMethodParameters)
-                        //            {
-                        //                cmbServices.Items.Add(new ComboBoxObjectComboItem(webServiceMethodParameters, webServiceMethodParameters.Name));
-                        //            }*/
-                        //        }
-                        //    }
-                        //}
-                    }
-                }
+                cmbServices.Items.Add(new ComboBoxObjectComboItem(service.Value, service.Key));
             }
         }
 
@@ -446,7 +422,12 @@ namespace SSISWCFTask100
             {
                 case 3:
                     {
-                        using (var expressionBuilder = ExpressionBuilder.Instantiate(_taskHost.Variables, _taskHost.VariableDispenser, Type.GetType((grdParameters.Rows[e.RowIndex].Cells[1]).Value.ToString()), grdParameters.Rows[e.RowIndex].Cells[e.ColumnIndex - 1].Value.ToString()))
+                        using (var expressionBuilder = ExpressionBuilder.Instantiate(_taskHost.Variables,
+                                                                                     _taskHost.VariableDispenser,
+                                                                                     Type.GetType((grdParameters.Rows[e.RowIndex].Cells[1]).Value.ToString()),
+                                                                                     (grdParameters.Rows[e.RowIndex].Cells[e.ColumnIndex - 1].Value != null)
+                                                                                                ? grdParameters.Rows[e.RowIndex].Cells[e.ColumnIndex - 1].Value.ToString()
+                                                                                                : string.Empty))
                         {
                             if (expressionBuilder.ShowDialog() == DialogResult.OK)
                             {
