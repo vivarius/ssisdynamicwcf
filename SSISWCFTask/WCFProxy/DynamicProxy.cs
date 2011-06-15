@@ -1,13 +1,3 @@
-#region Copyright Notice
-
-// ----------------------------------------------------------------------------
-// Copyright (C) 2006 Microsoft Corporation, All rights reserved.
-// ----------------------------------------------------------------------------
-
-// Author: Vipul Modi (vipul.modi@microsoft.com)
-
-#endregion
-
 using System;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
