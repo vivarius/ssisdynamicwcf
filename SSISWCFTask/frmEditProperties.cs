@@ -107,7 +107,7 @@ namespace SSISWCFTask100
                                 }
                                 else
                                 {
-                                    cmbReturnVariable.Items.AddRange(LoadAllVariables().ToArray());
+                                    cmbReturnVariable.Items.AddRange(LoadAllUserVariables().ToArray());
                                 }
 
                                 FillGridWithParams(_taskHost.Properties[Keys.MAPPING_PARAMS].GetValue(_taskHost) as MappingParams);
@@ -145,9 +145,11 @@ namespace SSISWCFTask100
         /// </summary>
         /// <param name="parameterInfo">The parameter info.</param>
         /// <returns></returns>
-        private List<string> LoadAllVariables()
+        private List<string> LoadAllUserVariables()
         {
-            return Variables.Cast<Variable>().Select(variable => string.Format("@[{0}::{1}]", variable.Namespace, variable.Name)).ToList();
+            return Variables.Cast<Variable>().Where(variable => variable.Namespace == "User")
+                                             .Select(variable => string.Format("@[{0}::{1}]", variable.Namespace, variable.Name))
+                                             .ToList();
         }
 
         /// <summary>
