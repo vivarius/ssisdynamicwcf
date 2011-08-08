@@ -137,7 +137,9 @@ namespace SSISWCFTask100
         /// <returns></returns>
         private List<string> LoadVariables(string parameterInfo)
         {
-            return Variables.Cast<Variable>().Where(variable => Type.GetTypeCode(Type.GetType(parameterInfo)) == variable.DataType).Select(variable => string.Format("@[{0}::{1}]", variable.Namespace, variable.Name)).ToList();
+            return Variables.Cast<Variable>().Where(variable => Type.GetTypeCode(Type.GetType(parameterInfo)) == variable.DataType)
+                                             .Select(variable => string.Format("@[{0}::{1}]", variable.Namespace, variable.Name))
+                                             .ToList();
         }
 
         /// <summary>

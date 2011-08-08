@@ -169,12 +169,13 @@ namespace SSISWCFTask100.WCFProxy
 
         private void DownloadMetadata()
         {
-            var epr = new EndpointAddress(_wsdlUri);
+            //var epr = new EndpointAddress(_wsdlUri);
 
             var disco = new DiscoveryClientProtocol
                             {
                                 AllowAutoRedirect = true,
-                                UseDefaultCredentials = true
+                                UseDefaultCredentials = true,
+
                             };
 
             disco.DiscoverAny(_wsdlUri);
@@ -185,6 +186,7 @@ namespace SSISWCFTask100.WCFProxy
             {
                 AddDocumentToResults(document, results);
             }
+
             _metadataCollection = results;
         }
 
@@ -304,16 +306,12 @@ namespace SSISWCFTask100.WCFProxy
                                         CodeProvider = _codeDomProvider,
                                         WebReferenceOptions = new WebReferenceOptions
                                                                   {
-                                                                      CodeGenerationOptions =
-                                                                          CodeGenerationOptions.GenerateProperties |
-                                                                          CodeGenerationOptions.GenerateOrder
+                                                                      CodeGenerationOptions = CodeGenerationOptions.GenerateProperties | CodeGenerationOptions.GenerateOrder
                                                                   }
                                     };
 
-            importOptions.WebReferenceOptions.SchemaImporterExtensions.Add(
-                typeof(TypedDataSetSchemaImporterExtension).AssemblyQualifiedName);
-            importOptions.WebReferenceOptions.SchemaImporterExtensions.Add(
-                typeof(DataSetSchemaImporterExtension).AssemblyQualifiedName);
+            importOptions.WebReferenceOptions.SchemaImporterExtensions.Add(typeof(TypedDataSetSchemaImporterExtension).AssemblyQualifiedName);
+            importOptions.WebReferenceOptions.SchemaImporterExtensions.Add(typeof(DataSetSchemaImporterExtension).AssemblyQualifiedName);
 
             importer.State.Add(typeof(XmlSerializerImportOptions), importOptions);
         }
@@ -324,25 +322,15 @@ namespace SSISWCFTask100.WCFProxy
                                               {
                                                   Options = new ImportOptions
                                                                 {
-                                                                    ImportXmlType =
-                                                                        (_options.FormatMode ==
-                                                                         DynamicProxyFactoryOptions.FormatModeOptions.
-                                                                             DataContractSerializer),
-                                                                    CodeProvider = _codeDomProvider
+                                                                    ImportXmlType = (_options.FormatMode == DynamicProxyFactoryOptions.FormatModeOptions.DataContractSerializer), CodeProvider = _codeDomProvider
                                                                 }
                                               };
 
             importer.State.Add(typeof(XsdDataContractImporter), xsdDataContractImporter);
 
-            foreach (IWsdlImportExtension importExtension in importer.WsdlImportExtensions)
+            foreach (var dcConverter in importer.WsdlImportExtensions.OfType<DataContractSerializerMessageContractImporter>())
             {
-                var dcConverter = importExtension as DataContractSerializerMessageContractImporter;
-
-                if (dcConverter != null)
-                {
-                    dcConverter.Enabled = _options.FormatMode !=
-                                          DynamicProxyFactoryOptions.FormatModeOptions.XmlSerializer;
-                }
+                dcConverter.Enabled = _options.FormatMode != DynamicProxyFactoryOptions.FormatModeOptions.XmlSerializer;
             }
         }
 
@@ -465,8 +453,7 @@ namespace SSISWCFTask100.WCFProxy
             ServiceEndpoint matchingEndpoint = Endpoints.FirstOrDefault(endpoint => ContractNameMatch(endpoint.Contract, contractName) && ContractNsMatch(endpoint.Contract, contractNamespace));
 
             if (matchingEndpoint == null)
-                throw new ArgumentException(string.Format(Constants.ErrorMessages.EndpointNotFound, contractName,
-                                                          contractNamespace));
+                throw new ArgumentException(string.Format(Constants.ErrorMessages.EndpointNotFound, contractName, contractNamespace));
 
             return matchingEndpoint;
         }
@@ -585,10 +572,9 @@ namespace SSISWCFTask100.WCFProxy
 
                 foreach (MetadataConversionError error in importErrors)
                 {
-                    if (error.IsWarning)
-                        importErrStr.AppendLine("Warning : " + error.Message);
-                    else
-                        importErrStr.AppendLine("Error : " + error.Message);
+                    importErrStr.AppendLine((error.IsWarning) 
+                                                ? "Warning : " + error.Message
+                                                : "Error : " + error.Message);                    
                 }
 
                 return importErrStr.ToString();
@@ -613,10 +599,7 @@ namespace SSISWCFTask100.WCFProxy
 
         private static IEnumerable<CompilerError> ToEnumerable(CompilerErrorCollection collection)
         {
-            if (collection == null)
-                return null;
-
-            return collection.Cast<CompilerError>().ToList();
+            return collection == null ? null : collection.Cast<CompilerError>().ToList();
         }
     }
 }
