@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmEditProperties));
             this.cmbURL = new System.Windows.Forms.ComboBox();
             this.btGO = new System.Windows.Forms.Button();
@@ -50,7 +51,13 @@
             this.listView1 = new System.Windows.Forms.ListView();
             this.lstCol1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.lstCol2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.grdHeaders = new System.Windows.Forms.DataGridView();
+            this.label5 = new System.Windows.Forms.Label();
+            this.grdColHeaderName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.grdColHeaderVars = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.grdColHeaderExpression = new System.Windows.Forms.DataGridViewButtonColumn();
             ((System.ComponentModel.ISupportInitialize)(this.grdParameters)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.grdHeaders)).BeginInit();
             this.SuspendLayout();
             // 
             // cmbURL
@@ -113,7 +120,7 @@
             this.grdParameters.Location = new System.Drawing.Point(11, 104);
             this.grdParameters.Name = "grdParameters";
             this.grdParameters.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            this.grdParameters.Size = new System.Drawing.Size(550, 173);
+            this.grdParameters.Size = new System.Drawing.Size(550, 166);
             this.grdParameters.TabIndex = 25;
             this.grdParameters.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grdParameters_CellContentClick);
             // 
@@ -161,7 +168,7 @@
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(8, 88);
+            this.label3.Location = new System.Drawing.Point(9, 88);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(63, 13);
             this.label3.TabIndex = 26;
@@ -170,7 +177,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(8, 66);
+            this.label4.Location = new System.Drawing.Point(9, 66);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(51, 13);
             this.label4.TabIndex = 28;
@@ -190,7 +197,7 @@
             // 
             this.cmbReturnVariable.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbReturnVariable.FormattingEnabled = true;
-            this.cmbReturnVariable.Location = new System.Drawing.Point(113, 289);
+            this.cmbReturnVariable.Location = new System.Drawing.Point(113, 384);
             this.cmbReturnVariable.Name = "cmbReturnVariable";
             this.cmbReturnVariable.Size = new System.Drawing.Size(448, 21);
             this.cmbReturnVariable.TabIndex = 30;
@@ -198,16 +205,16 @@
             // lbOutputValue
             // 
             this.lbOutputValue.AutoSize = true;
-            this.lbOutputValue.Location = new System.Drawing.Point(8, 292);
+            this.lbOutputValue.Location = new System.Drawing.Point(8, 387);
             this.lbOutputValue.Name = "lbOutputValue";
-            this.lbOutputValue.Size = new System.Drawing.Size(69, 13);
+            this.lbOutputValue.Size = new System.Drawing.Size(72, 13);
             this.lbOutputValue.TabIndex = 29;
-            this.lbOutputValue.Text = "Output Value";
+            this.lbOutputValue.Text = "Output Value:";
             // 
             // btSave
             // 
             this.btSave.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btSave.Location = new System.Drawing.Point(405, 321);
+            this.btSave.Location = new System.Drawing.Point(405, 416);
             this.btSave.Name = "btSave";
             this.btSave.Size = new System.Drawing.Size(75, 23);
             this.btSave.TabIndex = 32;
@@ -218,7 +225,7 @@
             // btnCancel
             // 
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnCancel.Location = new System.Drawing.Point(486, 321);
+            this.btnCancel.Location = new System.Drawing.Point(486, 416);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 23);
             this.btnCancel.TabIndex = 31;
@@ -230,7 +237,7 @@
             this.listView1.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.lstCol1,
             this.lstCol2});
-            this.listView1.Location = new System.Drawing.Point(-2, 382);
+            this.listView1.Location = new System.Drawing.Point(214, 459);
             this.listView1.Name = "listView1";
             this.listView1.Size = new System.Drawing.Size(151, 28);
             this.listView1.TabIndex = 33;
@@ -246,12 +253,68 @@
             // 
             this.lstCol2.Text = "Binding";
             // 
+            // grdHeaders
+            // 
+            this.grdHeaders.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.grdHeaders.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.grdColHeaderName,
+            this.grdColHeaderVars,
+            this.grdColHeaderExpression});
+            this.grdHeaders.Location = new System.Drawing.Point(11, 295);
+            this.grdHeaders.Name = "grdHeaders";
+            this.grdHeaders.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
+            this.grdHeaders.Size = new System.Drawing.Size(550, 83);
+            this.grdHeaders.TabIndex = 34;
+            this.grdHeaders.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grdHeaders_CellContentClick);
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(9, 279);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(50, 13);
+            this.label5.TabIndex = 35;
+            this.label5.Text = "Headers:";
+            // 
+            // grdColHeaderName
+            // 
+            this.grdColHeaderName.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.AllCells;
+            this.grdColHeaderName.Frozen = true;
+            this.grdColHeaderName.HeaderText = "Parameters";
+            this.grdColHeaderName.Name = "grdColHeaderName";
+            this.grdColHeaderName.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.grdColHeaderName.Width = 66;
+            // 
+            // grdColHeaderVars
+            // 
+            this.grdColHeaderVars.DisplayStyle = System.Windows.Forms.DataGridViewComboBoxDisplayStyle.ComboBox;
+            this.grdColHeaderVars.DropDownWidth = 300;
+            this.grdColHeaderVars.HeaderText = "Variables";
+            this.grdColHeaderVars.MaxDropDownItems = 10;
+            this.grdColHeaderVars.Name = "grdColHeaderVars";
+            this.grdColHeaderVars.Sorted = true;
+            this.grdColHeaderVars.Width = 240;
+            // 
+            // grdColHeaderExpression
+            // 
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle2.Padding = new System.Windows.Forms.Padding(2);
+            this.grdColHeaderExpression.DefaultCellStyle = dataGridViewCellStyle2;
+            this.grdColHeaderExpression.HeaderText = "f(x)";
+            this.grdColHeaderExpression.Name = "grdColHeaderExpression";
+            this.grdColHeaderExpression.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.grdColHeaderExpression.Text = "f(x)";
+            this.grdColHeaderExpression.ToolTipText = "Expressions...";
+            this.grdColHeaderExpression.Width = 30;
+            // 
             // frmEditProperties
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(573, 352);
+            this.ClientSize = new System.Drawing.Size(575, 451);
+            this.Controls.Add(this.label5);
+            this.Controls.Add(this.grdHeaders);
             this.Controls.Add(this.listView1);
             this.Controls.Add(this.btSave);
             this.Controls.Add(this.btnCancel);
@@ -274,6 +337,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Edit task properties";
             ((System.ComponentModel.ISupportInitialize)(this.grdParameters)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.grdHeaders)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -301,6 +365,10 @@
         private System.Windows.Forms.ListView listView1;
         private System.Windows.Forms.ColumnHeader lstCol1;
         private System.Windows.Forms.ColumnHeader lstCol2;
-
+        private System.Windows.Forms.DataGridView grdHeaders;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.DataGridViewComboBoxColumn grdColHeaderVars;
+        private System.Windows.Forms.DataGridViewButtonColumn grdColHeaderExpression;
+        private System.Windows.Forms.DataGridViewTextBoxColumn grdColHeaderName;
     }
 }

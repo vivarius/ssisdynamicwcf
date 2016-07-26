@@ -111,6 +111,7 @@ namespace SSISWCFTask100
                                 }
 
                                 FillGridWithParams(_taskHost.Properties[Keys.MAPPING_PARAMS].GetValue(_taskHost) as MappingParams);
+                                FillGridWithHeaders(_taskHost.Properties[Keys.MAPPING_HEADERS].GetValue(_taskHost) as MappingHeaders);
                             }
                     }
             }
@@ -328,6 +329,38 @@ namespace SSISWCFTask100
                 }
         }
 
+        private void FillGridWithHeaders(IEnumerable<MappingParam> mappingHeaders)
+        {
+            if (mappingHeaders != null)
+                foreach (var mappingHeader in mappingHeaders)
+                {
+                    int index = grdHeaders.Rows.Add();
+
+                    DataGridViewRow row = grdHeaders.Rows[index];
+
+                    row.Cells["grdColHeaderName"] = new DataGridViewTextBoxCell
+                    {
+                        Value = mappingHeader.Name,
+                        Tag = mappingHeader.Name,
+                    };
+
+                    row.Cells["grdColHeaderVars"] = LoadVariables(mappingHeader);
+                    row.Cells["grdColHeaderExpression"] = new DataGridViewButtonCell();
+
+
+                    if (_withReturnValue == Keys.FALSE)
+                    {
+                        lbOutputValue.Visible = cmbReturnVariable.Visible = false;
+                        _withReturnValue = Keys.FALSE;
+                    }
+                    else
+                    {
+                        lbOutputValue.Visible = cmbReturnVariable.Visible = true;
+                        _withReturnValue = Keys.TRUE;
+                    }
+                }
+        }
+
         private DataGridViewComboBoxCell LoadVariables(WebServiceMethodParameter parameterInfo)
         {
             var comboBoxCell = new DataGridViewComboBoxCell();
@@ -371,22 +404,31 @@ namespace SSISWCFTask100
 
         private void btSave_Click(object sender, EventArgs e)
         {
+            var mappingParams = new MappingParams();
+            mappingParams.AddRange(from DataGridViewRow mappingParam in grdParameters.Rows
+                                   select new MappingParam
+                                   {
+                                       Name = mappingParam.Cells[0].Value.ToString(),
+                                       Type = mappingParam.Cells[1].Value.ToString(),
+                                       Value = mappingParam.Cells[2].Value.ToString()
+                                   });
+
+            var mappingHeaders = new MappingHeaders();
+            mappingHeaders.AddRange(from DataGridViewRow mappingRow in grdHeaders.Rows
+                                    where !mappingRow.IsNewRow
+                                    select new MappingParam
+                                    {
+                                        Name = mappingRow.Cells[0].Value.ToString(),
+                                        Type = "System.String",
+                                        Value = mappingRow.Cells[1].Value.ToString()
+                                    });
+
             //Save the values
             _taskHost.Properties[Keys.SERVICE_URL].SetValue(_taskHost, cmbURL.Text);
             _taskHost.Properties[Keys.SERVICE_CONTRACT].SetValue(_taskHost, cmbServices.Text);
             _taskHost.Properties[Keys.OPERATION_CONTRACT].SetValue(_taskHost, cmbMethods.Text);
-
-            var mappingParams = new MappingParams();
-
-            mappingParams.AddRange(from DataGridViewRow mappingParam in grdParameters.Rows
-                                   select new MappingParam
-                                              {
-                                                  Name = mappingParam.Cells[0].Value.ToString(),
-                                                  Type = mappingParam.Cells[1].Value.ToString(),
-                                                  Value = mappingParam.Cells[2].Value.ToString()
-                                              });
-
             _taskHost.Properties[Keys.MAPPING_PARAMS].SetValue(_taskHost, mappingParams);
+            _taskHost.Properties[Keys.MAPPING_HEADERS].SetValue(_taskHost, mappingHeaders);
             _taskHost.Properties[Keys.RETURNED_VALUE].SetValue(_taskHost, cmbReturnVariable.Text);
             _taskHost.Properties[Keys.IS_VALUE_RETURNED].SetValue(_taskHost, _withReturnValue);
 
@@ -437,6 +479,31 @@ namespace SSISWCFTask100
                             {
                                 ((DataGridViewComboBoxCell)grdParameters.Rows[e.RowIndex].Cells[e.ColumnIndex - 1]).Items.Add(expressionBuilder.Expression);
                                 grdParameters.Rows[e.RowIndex].Cells[e.ColumnIndex - 1].Value = expressionBuilder.Expression;
+                            }
+                        }
+                    }
+
+                    break;
+            }
+        }
+
+        private void grdHeaders_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            switch (e.ColumnIndex)
+            {
+                case 2:
+                    {
+                        using (var expressionBuilder = ExpressionBuilder.Instantiate(_taskHost.Variables,
+                                                                                     _taskHost.VariableDispenser,
+                                                                                     typeof(string),
+                                                                                     (grdHeaders.Rows[e.RowIndex].Cells[e.ColumnIndex - 1].Value != null)
+                                                                                                ? grdHeaders.Rows[e.RowIndex].Cells[e.ColumnIndex - 1].Value.ToString()
+                                                                                                : string.Empty))
+                        {
+                            if (expressionBuilder.ShowDialog() == DialogResult.OK)
+                            {
+                                ((DataGridViewComboBoxCell)grdHeaders.Rows[e.RowIndex].Cells[e.ColumnIndex - 1]).Items.Add(expressionBuilder.Expression);
+                                grdHeaders.Rows[e.RowIndex].Cells[e.ColumnIndex - 1].Value = expressionBuilder.Expression;
                             }
                         }
                     }

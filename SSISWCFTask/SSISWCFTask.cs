@@ -44,6 +44,8 @@ namespace SSISWCFTask100
         public string OperationContract { get; set; }
         [Category("Component specific"), Description("MappingParams")]
         public object MappingParams { get; set; }
+        [Category("Component specific"), Description("MappingHeaders")]
+        public object MappingHeaders { get; set; }
         [Category("Component specific"), Description("Output Variable")]
         public string ReturnedValue { get; set; }
         [Category("Component specific"), Description("The method returns a value? (O/1)")]
@@ -166,6 +168,19 @@ namespace SSISWCFTask100
                         {
                             componentEvents.FireInformation(0, "SSISWCFTask", "Creating the Message Header", string.Empty, 0, ref refire);
                             OperationContext.Current.OutgoingMessageHeaders.Add(MessageHeader.CreateHeader("SSISDynamicWCF", "", Guid.NewGuid().ToString()));
+
+                            componentEvents.FireInformation(0, "SSISWCFTask", "The used headers:", string.Empty, 0, ref refire);
+                            foreach (var header in ((MappingHeaders)MappingHeaders))
+                            {
+                                var headerValue = Convert.ChangeType(EvaluateExpression(header.Value, variableDispenser).ToString(), Type.GetType(header.Type));
+                                componentEvents.FireInformation(0, "SSISWCFTask",
+                                                                string.Format("Name: {0} | Type: {1} | Value: {2}",
+                                                                               header.Name,
+                                                                               header.Type,
+                                                                               headerValue),
+                                                                string.Empty, 0, ref refire);
+                                OperationContext.Current.OutgoingMessageHeaders.Add(MessageHeader.CreateHeader(header.Name, "", headerValue));
+                            }
 
                             componentEvents.FireInformation(0, "SSISWCFTask", "The used params:", string.Empty, 0, ref refire);
                             foreach (var param in ((MappingParams)MappingParams))
@@ -488,6 +503,9 @@ namespace SSISWCFTask100
             XmlAttribute mappingParams = doc.CreateAttribute(string.Empty, Keys.MAPPING_PARAMS, string.Empty);
             mappingParams.Value = Serializer.SerializeToXmlString(MappingParams);
 
+            XmlAttribute mappingHeaders = doc.CreateAttribute(string.Empty, Keys.MAPPING_HEADERS, string.Empty);
+            mappingHeaders.Value = Serializer.SerializeToXmlString(MappingHeaders);
+
             XmlAttribute returnedVariable = doc.CreateAttribute(string.Empty, Keys.RETURNED_VALUE, string.Empty);
             returnedVariable.Value = ReturnedValue;
 
@@ -498,6 +516,7 @@ namespace SSISWCFTask100
             taskElement.Attributes.Append(service);
             taskElement.Attributes.Append(webMethod);
             taskElement.Attributes.Append(mappingParams);
+            taskElement.Attributes.Append(mappingHeaders);
             taskElement.Attributes.Append(returnedVariable);
             taskElement.Attributes.Append(isReturnedVariable);
 
@@ -522,6 +541,7 @@ namespace SSISWCFTask100
                 ServiceContract = node.Attributes.GetNamedItem(Keys.SERVICE_CONTRACT).Value;
                 OperationContract = node.Attributes.GetNamedItem(Keys.OPERATION_CONTRACT).Value;
                 MappingParams = Serializer.DeSerializeFromXmlString(typeof(MappingParams), node.Attributes.GetNamedItem(Keys.MAPPING_PARAMS).Value);
+                MappingHeaders = Serializer.DeSerializeFromXmlString(typeof(MappingHeaders), node.Attributes.GetNamedItem(Keys.MAPPING_HEADERS).Value);
                 ReturnedValue = node.Attributes.GetNamedItem(Keys.RETURNED_VALUE).Value;
                 IsValueReturned = node.Attributes.GetNamedItem(Keys.IS_VALUE_RETURNED).Value;
             }

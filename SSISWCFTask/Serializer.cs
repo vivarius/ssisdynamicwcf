@@ -20,7 +20,7 @@ namespace SSISWCFTask100
                 byteArray = memoryStream.ToArray();
             }
 
-            return new ASCIIEncoding().GetString(byteArray);
+            return new UTF8Encoding().GetString(byteArray);
         }
 
         public static object DeSerializeFromXmlString(System.Type typeToDeserialize, string xmlString)

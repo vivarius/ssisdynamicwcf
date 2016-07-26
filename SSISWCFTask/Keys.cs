@@ -9,6 +9,7 @@ namespace SSISWCFTask100
         public const string SERVICE_CONTRACT = "ServiceContract";
         public const string OPERATION_CONTRACT = "OperationContract";
         public const string MAPPING_PARAMS = "MappingParams";
+        public const string MAPPING_HEADERS = "MappingHeaders";
         public const string RETURNED_VALUE = "ReturnedValue";
         public const string IS_VALUE_RETURNED = "IsValueReturned";
 
@@ -26,6 +27,11 @@ namespace SSISWCFTask100
 
     [Serializable]
     public class MappingParams : List<MappingParam>
+    {
+    }
+
+    [Serializable]
+    public class MappingHeaders : List<MappingParam>
     {
     }
 
