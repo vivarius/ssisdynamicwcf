@@ -19,7 +19,7 @@ namespace SSISWCFTask100
         DisplayName = "Dynamic WCF Task",
         UITypeName = "SSISWCFTask100.SSISWCFTaskUIInterface" +
         ",SSISWCFTask100," +
-        "Version=1.2.0.0," +
+        "Version=1.3.0.0," +
         "Culture=Neutral," +
         "PublicKeyToken=dbcd46b65a9ba84f",
         IconResource = "SSISWCFTask100.Communication.ico",
